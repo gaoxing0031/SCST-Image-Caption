@@ -5,7 +5,7 @@ import os
 import json
 
 def language_eval(dataset, preds, split):
-    annFile = 'F:/mscoco/annotations/captions_val2014.json'
+    annFile = '/home/zy/mscoco/annotations/captions_val2014.json'
     from pycocotools.coco import COCO
     from pycocoevalcap.eval import COCOEvalCap
 
@@ -56,6 +56,7 @@ def eval_split(model, crit, loader, split, opt):
         fc_feats, att_feats, labels, masks, att_masks = tmp
 
         with torch.no_grad():
+            #loss = crit(model('forward', fc_feats, att_feats, labels, att_masks), labels, masks).item()
             loss = crit(model('forward', fc_feats, att_feats, labels, att_masks), labels[:, 1:], masks[:, 1:]).item()
         loss_sum = loss_sum + loss
         loss_evals = loss_evals + 1
@@ -73,6 +74,7 @@ def eval_split(model, crit, loader, split, opt):
         sents = decode_sequence(loader.get_vocab(), seq)
 
         for k, sent in enumerate(sents):
+            # print('image_id {}, caption {}'.format(data['infos'][k]['id'], sent))
             entry = {'image_id': data['infos'][k]['id'], 'caption': sent}
             predictions.append(entry)
 

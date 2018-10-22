@@ -4,10 +4,12 @@ from dataloader import *
 import tensorboardX as tb
 from opts import Opt
 from FCModel import *
+from AttModel import *
 import utils
 import eval
 import torch.nn as nn
 from rewards import *
+import sys
 
 def add_summary_value(writer, key, value, iteration):
     if writer:
@@ -31,7 +33,8 @@ def train(opt):
     loader.iterators = infos.get('iterators', loader.iterators)
     loader.split_ix = infos.get('split_ix', loader.split_ix)
 
-    model = FCModel(opt).cuda()
+    # model = FCModel(opt).cuda()
+    model =  AttModel(opt).cuda()
     #dp_model = torch.nn.DataParallel(model)
     dp_model = model
     dp_model.train()
@@ -44,7 +47,7 @@ def train(opt):
 
     start = time.time()
     while True:
-        sys.stdout.flush()
+        # sys.stdout.flush()
         # Learning rate decay
         if epoch > opt.learning_rate_decay_start and opt.learning_rate_decay_start >= 0:
             frac = (epoch - opt.learning_rate_decay_start) // opt.learning_rate_decay_every
@@ -74,6 +77,8 @@ def train(opt):
         optimizer.zero_grad()
         if not sc_flag:
             loss = crit(dp_model('forward', fc_feats, att_feats, labels, att_masks), labels[:, 1:], masks[:, 1:])
+            # loss = crit(dp_model('forward', fc_feats, att_feats, labels, att_masks), labels, masks)
+            # loss = crit(dp_model(fc_feats, att_feats, labels, att_masks), labels[:, 1:], masks[:, 1:])
         else:
             # Generate baseline with argmax
             opt.sample_max = False
@@ -81,11 +86,10 @@ def train(opt):
             opt.sample_max = True
             reward = get_self_critical_reward(dp_model, fc_feats, att_feats, att_masks, data, gen_result, opt)
             loss = rl_crit(sample_logprobs, gen_result.data, torch.from_numpy(reward).float().cuda())
-            # print('Get critical Loss')
 
         loss.backward()
 
-        nn.utils.clip_grad_norm(dp_model.parameters(), opt.grad_clip)
+        torch.nn.utils.clip_grad_norm_(dp_model.parameters(), opt.grad_clip)
 
         train_loss = loss.item()
 
@@ -106,7 +110,7 @@ def train(opt):
 
         if data['bounds']['wrapped']:
             epoch += 1
-
+        #-------------------------------------------------------------------#
         if (iteration % opt.checkpoint_every == 0):
             add_summary_value(tb_summary_writer, 'train_loss', train_loss, iteration)
             add_summary_value(tb_summary_writer, 'learning_rate', opt.current_lr, iteration)
@@ -117,6 +121,7 @@ def train(opt):
             loss_history[iteration] = train_loss if not sc_flag else np.mean(reward[:,0])
             lr_history[iteration] = opt.current_lr
 
+        #-------------------------------------------------------------------#
         if (iteration % opt.save_every == 0):
             val_loss, predictions, lang_stats = eval.eval_split(dp_model, crit, loader, 'val', opt)
             add_summary_value(tb_summary_writer, 'validation loss', val_loss, iteration)

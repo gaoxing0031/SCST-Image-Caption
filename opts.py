@@ -27,10 +27,10 @@ class Opt():
         self.ss_prob = 0.0 # Schedule sampling probability
 
         self.max_epochs = 20
-        self.print_every = 50
+        self.print_every = 1
         self.print_eval_every = 1000
         self.checkpoint_every = 100
-        self.save_every = 100
+        self.save_every = 5
         self.max_eval_points = 0
         self.grad_clip = 0.5
         self.learning_rate = 5e-5
@@ -43,12 +43,18 @@ class Opt():
 
         self.beam_size = 1
 
-        self.use_att = False
+        self.use_att = True
         self.norm_att_feat = False
 
-        self.val_num_images = 5000
-        self.self_critical_after=10
+        self.val_num_images = 1000
+        self.self_critical_after=100
         self.cached_tokens = 'coco-all-idxs'
         self.cider_reward_weight = 1
         self.bleu_reward_weight = 0
         self.best_cider_score = 0
+        ##############
+        self.att_feat_size = 2048
+        self.att_hid_size = 512
+        self.use_bn = 0
+
+

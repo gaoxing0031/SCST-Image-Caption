@@ -127,18 +127,19 @@ class FCModel(CaptionModel):
         state = self.init_hidden(batch_size)
         outputs = []
         fc_feats = fc_feats.squeeze(1)
+        # seq.size(1) --> 18
         for i in range(seq.size(1)):
             if i == 0:
+                # Use image feature at the beginning
                 xt = self.img_embed(fc_feats) # [50, 512]
             else:
-                # mistake clone() -- solved
                 it = seq[:, i-1].data.clone().contiguous()
                 it = it.cpu().detach().numpy()
                 it = torch.cuda.LongTensor(it)
                 if i >= 2 and seq[:, i-1].sum() == 0:
                     break
                 xt = self.embed(it) # [50, 512]
-
+            # Ouput for image input exclude in training
             output, state = self.core(xt.unsqueeze(0), state)
             output = F.log_softmax(self.logit(self.dropout(output.squeeze(0))), dim=1)
             outputs.append(output)

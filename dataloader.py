@@ -137,9 +137,11 @@ class DataLoader(data.Dataset):
         data['fc_feats'] = np.stack(reduce(lambda x,y:x+y, [[_] * seq_per_img for _ in fc_batch]))
 
         max_att_len = max([_.shape[0] for _ in att_batch])
-        data['att_feats'] = np.zeros([len(att_batch)*seq_per_img, max_att_len, att_batch[0].shape[1]], dtype='float32')
+        # data['att_feats'] = np.zeros([len(att_batch)*seq_per_img, max_att_len, att_batch[0].shape[1]], dtype='float32')
+        data['att_feats'] = np.zeros([len(att_batch)*seq_per_img, att_batch[0].size(1), att_batch[0].size(2)])
         for i in range(len(att_batch)):
-            data['att_feats'][i*seq_per_img:(i+1)*seq_per_img, :att_batch[i].shape[0]] = att_batch[i]
+            # data['att_feats'][i*seq_per_img:(i+1)*seq_per_img, :att_batch[i].shape[1]] = att_batch[i]
+            data['att_feats'][i*seq_per_img : (i+1)*seq_per_img, : , : ] = att_batch[i]
         # TODO: Figure out the principle to arrange att feats
         data['att_masks'] = np.zeros(data['att_feats'].shape[:2], dtype='float32')
         for i in range(len(att_batch)):
