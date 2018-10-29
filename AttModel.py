@@ -9,7 +9,7 @@ class AttentiveCNN(nn.Module):
     def __init__(self, opt):
         super(AttentiveCNN, self).__init__()
         self.opt = opt
-        self.avgpool = nn.AvgPool2d(7)
+        self.avgpool = nn.AvgPool2d(opt.att_size)
         self.affine_a = nn.Linear(opt.fc_feat_size, opt.embedding_size)
         self.affine_b = nn.Linear(opt.fc_feat_size, opt.rnn_size)
 
@@ -220,7 +220,7 @@ class AttModel(CaptionModel):
             cells = Variable(torch.zeros(1, batch_size, self.opt.rnn_size))
             it = torch.zeros(fc_feats.size(0)).long()
 
-        for time_step in range(self.opt.seq_length + 2):
+        for time_step in range(self.opt.seq_length):
             it = it.long()
             x_t = self.embed(it)
             x_t = x_t.unsqueeze(1) # [10,1,512]
